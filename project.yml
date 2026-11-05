@@ -1,0 +1,72 @@
+name: TZCam
+
+options:
+  bundleIdPrefix: net.jamesash
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    # Set via `make TEAM=XXXXXXXXXX` or the TZCAM_TEAM_ID env var.
+    DEVELOPMENT_TEAM: ${TZCAM_TEAM_ID}
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_HARDENED_RUNTIME: YES
+    MARKETING_VERSION: 0.1.0
+    CURRENT_PROJECT_VERSION: 1
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: minimal
+    GENERATE_INFOPLIST_FILE: NO
+
+targets:
+  TZCam:
+    type: application
+    platform: macOS
+    sources: [App, Shared]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.jamesash.TZCam
+        PRODUCT_NAME: TZCam
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: TZ Cam
+        LSApplicationCategoryType: public.app-category.productivity
+        NSCameraUsageDescription: TZ Cam reads your camera so it can add your local time and a background before passing the video to Teams.
+    entitlements:
+      path: App/TZCam.entitlements
+      properties:
+        com.apple.developer.system-extension.install: true
+        com.apple.security.device.camera: true
+    dependencies:
+      - target: TZCamExtension
+        embed: true
+        codeSign: true
+        copy:
+          destination: wrapper
+          subpath: Contents/Library/SystemExtensions
+    scheme: {}
+
+  TZCamExtension:
+    type: system-extension
+    platform: macOS
+    sources: [CameraExtension, Shared]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.jamesash.TZCam.CameraExtension
+        # System extension bundles are named after their bundle ID.
+        PRODUCT_NAME: $(PRODUCT_BUNDLE_IDENTIFIER)
+        SKIP_INSTALL: YES
+    info:
+      path: CameraExtension/Info.plist
+      properties:
+        CFBundleDisplayName: TZ Cam
+        NSSystemExtensionUsageDescription: Provides the TZ Cam virtual camera.
+        CMIOExtension:
+          CMIOExtensionMachServiceName: $(TeamIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)
+    entitlements:
+      path: CameraExtension/CameraExtension.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)

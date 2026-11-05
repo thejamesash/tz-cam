@@ -1,0 +1,7 @@
+build/
+TZCam.xcodeproj/
+App/Info.plist
+CameraExtension/Info.plist
+*.entitlements
+.DS_Store
+xcuserdata/
